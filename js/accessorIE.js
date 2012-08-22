@@ -50,7 +50,7 @@
 
                     return parent(extend);
                 }
-            }());
+            }(Object.create));
         }
     }
 
