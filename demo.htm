@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--[if lt IE 9]><script type="text/javascript" src="js/accessorIE.js"></script><![endif]-->
+    </head>
+
+    <body>
+        <h1 id="name"></h1>
+        <p>Before: <span id="before"></span></p>
+        <p>After: <span id="after"></span></p>
+        <p>Then: <span id="then"></span></p>
+
+        <script type="text/javascript">
+            var the_value = 7,
+                obj = Object.create(Object.prototype, {
+                    prop1: {
+                        value: "test"
+                    },
+                    prop2: {
+                        get: function () {
+                            return the_value + 1;
+                        },
+                        set: function (value) {
+                            the_value = value + 3;
+                        }
+                    }
+                }),
+                name,
+                before,
+                after,
+                then;
+
+            name = obj.prop1;
+            before = obj.prop2;
+            obj.prop2 = 22;
+
+            after = obj.prop2;
+            obj.prop2 += 1;
+            then = obj.prop2;
+
+            document.getElementById("name").innerHTML = name;
+            document.getElementById("before").innerHTML = before;
+            document.getElementById("after").innerHTML = after;
+            document.getElementById("then").innerHTML = then;
+        </script>
+    </body>
+</html>
