@@ -12,23 +12,51 @@
 
         <script type="text/javascript">
             var the_value = 7,
-                obj = Object.create(null, {
-                    prop1: {
-                        value: "test"
-                    },
-                    prop2: {
-                        get: function () {
-                            return the_value + 1;
-                        },
-                        set: function (value) {
-                            the_value = value + 3;
-                        }
-                    }
-                }),
+                obj = Object.create(null),
                 name,
                 before,
                 after,
                 then;
+
+            Object.defineProperties(obj, {
+                __defineGetter__: {
+                    enumerable: false,
+                    value: function (propertyName, fn) {
+                        Object.defineProperty(obj, propertyName, {
+                            get: fn,
+                            configurable: true
+                        });
+                    }
+                },
+                __defineSetter__: {
+                    enumerable: false,
+                    value: function (propertyName, fn) {
+                        Object.defineProperty(obj, propertyName, {
+                            set: fn,
+                            configurable: true
+                        });
+                    }
+                }
+            });
+
+            //Object.defineProperty(obj, "prop1", {
+            //    value: "test"
+            //});
+            obj.__defineGetter__("prop1", function () {
+                return "test";
+            });
+            obj.__defineSetter__("prop1", function (value) {
+                document.body.style.background = "red";
+            });
+
+            Object.defineProperty(obj, "prop2", {
+                get: function () {
+                    return the_value + 1;
+                },
+                set: function (value) {
+                    the_value = value + 3;
+                }
+            });
 
             name = obj.prop1;
             before = obj.prop2;
@@ -42,6 +70,22 @@
             document.getElementById("before").innerHTML = before;
             document.getElementById("after").innerHTML = after;
             document.getElementById("then").innerHTML = then;
+
+            obj.__defineGetter__("test", function () {
+                return function () {
+                    return 1;
+                };
+            });
+
+            //obj.test = function () {
+            //    return 2;
+            //};
+
+            //alert(obj.test());
+            //var f = obj.test;
+            //alert(f());
+
+            //obj.prop1 = "hello";
         </script>
     </body>
 </html>

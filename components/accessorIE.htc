@@ -1,0 +1,62 @@
+<public:component>
+    <script type="text/javascript" id="script">
+        var hasOwnProperty = {}.hasOwnProperty,
+            descriptors = {},
+            elements = {},
+            container = script.parentNode;
+
+        function get(name) {
+            var descriptor = descriptors[name];
+
+            if (hasOwnProperty.call(descriptor, "value")) {
+                return descriptor.value;
+            } else {
+                return descriptor.get();
+            }
+        }
+
+        function set(name, value) {
+            var descriptor = descriptors[name];
+
+            if (hasOwnProperty.call(descriptor, "value")) {
+                descriptor.value = value;
+            } else {
+                descriptor.set(value);
+            }
+        }
+
+        element.__transport__ = {
+            defineProperty: function (name, descriptor) {
+                var element,
+                    attribute;
+
+                if (descriptors[name]) {
+                    // May have changed type from property <-> method
+                    container.removeChild(elements[name]);
+
+                    for (attribute in descriptor) {
+                        if (hasOwnProperty.call(descriptor, attribute)) {
+                            descriptors[name][attribute] = descriptor[attribute];
+                        }
+                    }
+                } else {
+                    descriptors[name] = descriptor;
+                }
+
+                if (descriptor.value && typeof descriptor.value === "function") {
+                    element = document.createElement("<public:method name='" + name + "' />");
+
+                    script.text = "function " + name + "() { return descriptors['" + name + "'].value.apply(this, arguments); }";
+                } else {
+                    element = document.createElement("<public:property name='" + name + "' get='get_" + name + "' put='set_" + name + "' />");
+
+                    script.text = "function get_" + name + "() { return get('" + name + "'); } function set_" + name + "(value) { set('" + name + "', value); }";
+                }
+
+                elements[name] = element;
+
+                container.insertBefore(element, script);
+            }
+        };
+    </script>
+</public:component>

@@ -22,11 +22,11 @@
     "use strict";
 
     var global = new [Function][0]("return this;")(),
+        Object = global.Object,
+        document = global.document,
         needsAccessorShim = !!global.execScript,
-        globalTransportKey = "AccessorZ__",
-        globalTransport,
-        nextIndex = 0,
-        allPropertyDescriptors = {};
+        namespacePath = "../components/accessorIE.htc",
+        namespaceName = "accessorIE";
 
     if (!Object.create) {
         Object.create = function (extend) {
@@ -36,16 +36,35 @@
         };
 
         if (needsAccessorShim) {
-            setupTransport();
+            setupComponent();
+
+            Object.defineProperty = function (obj, name, descriptor) {
+                obj.__transport__.defineProperty(name, descriptor);
+            };
+
+            Object.defineProperties = function (obj, descriptors) {
+                each(descriptors, function (descriptor, name) {
+                    //alert(name);
+                    Object.defineProperty(obj, name, descriptor);
+                });
+            };
 
             Object.create = (function (parent) {
                 return function (extend, propertyDescriptors) {
-                    if (propertyDescriptors) {
-                        if (extend !== null) {
-                            throw new Error("Shim can only work for IE when extending null");
+                    var obj;
+
+                    if (extend === null) {
+                        obj = createObject();
+
+                        if (propertyDescriptors) {
+                            Object.defineProperties(obj, propertyDescriptors);
                         }
 
-                        return createObject(propertyDescriptors);
+                        return obj;
+                    }
+
+                    if (propertyDescriptors) {
+                        throw new Error("Shim can only work for IE when extending null");
                     }
 
                     return parent(extend);
@@ -82,70 +101,19 @@
         return object;
     }
 
-    function setupTransport() {
-        globalTransport = {
-            lastObject: null,
+    function setupComponent() {
+        var namespace = document.namespaces.add(namespaceName);
 
-            get: function (objectName, propertyName) {
-                var propertyDescriptor = allPropertyDescriptors[objectName][propertyName];
+        document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "<?import namespace='" + namespaceName + "' implementation='" + namespacePath + "'> /");
 
-                if (propertyDescriptor.hasOwnProperty("value")) {
-                    return propertyDescriptor.value;
-                } else {
-                    return propertyDescriptor.get();
-                }
-            },
-
-            set: function (objectName, propertyName, value) {
-                var propertyDescriptor = allPropertyDescriptors[objectName][propertyName];
-
-                if (propertyDescriptor.hasOwnProperty("value")) {
-                    propertyDescriptor.value = value;
-                } else {
-                    propertyDescriptor.set(value);
-                }
-            }
-        };
-
-        global[globalTransportKey] = globalTransport;
+        namespace.doImport(namespacePath);
     }
 
-    function execVBScript(code) {
-        global.execScript(code, "VBScript");
-    }
+    function createObject() {
+        var obj = document.createElement(namespaceName + ":object");
 
-    function buildAccessors(objectName, propertyName) {
-        function buildCallback(type, value) {
-            return "window." + globalTransportKey + "." + type + (value ? " " : "(") + "\"" + objectName + "\", \"" + propertyName + "\"" + (value ? ", " + value : "") + (value ? "" : ")");
-        }
+        document.appendChild(obj);
 
-        // TODO: Simple properties don't need accessors
-        return (
-            "Public Property Get " + propertyName + "()\n" + propertyName + " = " + buildCallback("get") + "\n" + "End Property\n" +
-            "Public Property Let " + propertyName + "(value__)\n" + buildCallback("set", "value__") + "\n" + "End Property\n" +
-            "Public Property Set " + propertyName + "(value__)\n" + buildCallback("set", "value__") + "\n" + "End Property\n"
-        );
-    }
-
-    function createObject(propertyDescriptors) {
-        var objectName = "AccessorZ_" + nextIndex,
-            accessorCode = "",
-            definitionCode;
-
-        each(propertyDescriptors, function (definition, name) {
-            accessorCode += buildAccessors(objectName, name);
-        });
-
-        allPropertyDescriptors[objectName] = propertyDescriptors;
-
-        definitionCode =
-            "Class " + objectName + "\n" + accessorCode + "End Class\n" +
-            "Set window." + globalTransportKey + ".lastObject = New " + objectName + "\n";
-
-        execVBScript(definitionCode);
-
-        nextIndex += 1;
-
-        return globalTransport.lastObject;
+        return obj;
     }
 }());
