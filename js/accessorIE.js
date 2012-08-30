@@ -40,6 +40,8 @@
 
             Object.defineProperty = function (obj, name, descriptor) {
                 obj.__transport__.defineProperty(name, descriptor);
+
+                return obj;
             };
 
             Object.defineProperties = function (obj, descriptors) {
@@ -47,6 +49,8 @@
                     //alert(name);
                     Object.defineProperty(obj, name, descriptor);
                 });
+
+                return obj;
             };
 
             Object.create = (function (parent) {
