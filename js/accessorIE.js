@@ -25,8 +25,21 @@
         Object = global.Object,
         document = global.document,
         needsAccessorShim = !!global.execScript,
-        namespacePath = "../components/accessorIE.htc",
-        namespaceName = "accessorIE";
+        namespacePath = "/accessorIE/components/accessorIE.htc",
+        namespaceName = "accessorIE",
+        transportName = "__transport__";
+
+    if (!Object.keys) {
+        Object.keys = function (obj) {
+            var keys = [];
+
+            for (key in obj) {
+                keys.push(key);
+            }
+
+            return keys;
+        };
+    }
 
     if (!Object.create) {
         Object.create = function (extend) {
@@ -39,7 +52,7 @@
             setupComponent();
 
             Object.defineProperty = function (obj, name, descriptor) {
-                obj.__transport__.defineProperty(name, descriptor);
+                obj[transportName].defineProperty(name, descriptor);
 
                 return obj;
             };
@@ -54,7 +67,7 @@
             };
 
             Object.getOwnPropertyDescriptor = function (obj, name) {
-                return obj.__transport__.getOwnPropertyDescriptor(name);
+                return obj[transportName].getOwnPropertyDescriptor(name);
             };
 
             Object.create = (function (parent) {
@@ -121,6 +134,10 @@
         var obj = document.createElement(namespaceName + ":object");
 
         document.appendChild(obj);
+
+        if (!obj[transportName]) {
+            throw new Error("accessorIE shim .htc missing or served with wrong MIME type");
+        }
 
         return obj;
     }

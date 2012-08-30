@@ -3,7 +3,8 @@
         var hasOwnProperty = {}.hasOwnProperty,
             descriptors = {},
             elements = {},
-            container = script.parentNode;
+            container = script.parentNode,
+            transportName = "__transport__";
 
         function get(name) {
             var descriptor = descriptors[name];
@@ -25,7 +26,7 @@
             }
         }
 
-        element.__transport__ = {
+        element[transportName] = {
             defineProperty: function (name, descriptor) {
                 var element,
                     attribute;
