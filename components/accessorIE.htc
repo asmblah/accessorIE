@@ -4,7 +4,8 @@
             descriptors = {},
             elements = {},
             container = script.parentNode,
-            transportName = "__transport__";
+            transportName = "__transport__",
+            obj = element;
 
         function get(name) {
             var descriptor = descriptors[name];
@@ -12,7 +13,7 @@
             if (hasOwnProperty.call(descriptor, "value")) {
                 return descriptor.value;
             } else {
-                return descriptor.get();
+                return descriptor.get.call(obj);
             }
         }
 
@@ -22,7 +23,7 @@
             if (hasOwnProperty.call(descriptor, "value")) {
                 descriptor.value = value;
             } else {
-                descriptor.set(value);
+                descriptor.set.call(obj, value);
             }
         }
 
