@@ -56,6 +56,10 @@
                 elements[name] = element;
 
                 container.insertBefore(element, script);
+            },
+
+            getOwnPropertyDescriptor: function (name) {
+                return descriptors[name];
             }
         };
     </script>

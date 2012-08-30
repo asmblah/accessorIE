@@ -53,6 +53,10 @@
                 return obj;
             };
 
+            Object.getOwnPropertyDescriptor = function (obj, name) {
+                return obj.__transport__.getOwnPropertyDescriptor(name);
+            };
+
             Object.create = (function (parent) {
                 return function (extend, propertyDescriptors) {
                     var obj;
