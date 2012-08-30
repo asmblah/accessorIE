@@ -41,8 +41,8 @@
             Object.create = (function (parent) {
                 return function (extend, propertyDescriptors) {
                     if (propertyDescriptors) {
-                        if (extend !== Object.prototype) {
-                            throw new Error("Shim can only work for IE when extending Object.prototype");
+                        if (extend !== null) {
+                            throw new Error("Shim can only work for IE when extending null");
                         }
 
                         return createObject(propertyDescriptors);
