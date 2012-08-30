@@ -46,7 +46,7 @@
                 if (descriptor.value && typeof descriptor.value === "function") {
                     element = document.createElement("<public:method name='" + name + "' />");
 
-                    script.text = "function " + name + "() { return descriptors['" + name + "'].value.apply(this, arguments); }";
+                    script.text = "var " + name + " = descriptors['" + name + "'].value";
                 } else {
                     element = document.createElement("<public:property name='" + name + "' get='get_" + name + "' put='set_" + name + "' />");
 
