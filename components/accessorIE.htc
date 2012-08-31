@@ -10,26 +10,6 @@
             prototype = null,
             obj = element;
 
-        function get(name) {
-            var descriptor = descriptors[name];
-
-            if (hasOwnProperty.call(descriptor, "value")) {
-                return descriptor.value;
-            } else {
-                return descriptor.get.call(obj);
-            }
-        }
-
-        function set(name, value) {
-            var descriptor = descriptors[name];
-
-            if (hasOwnProperty.call(descriptor, "value")) {
-                descriptor.value = value;
-            } else {
-                descriptor.set.call(obj, value);
-            }
-        }
-
         transport = {
             defineProperty: function (name, descriptor) {
                 var element,
@@ -94,19 +74,54 @@
             }
         });
 
+        function get(name) {
+            return readDescriptor(descriptors[name]);
+        }
+
+        function set(name, value) {
+            writeDescriptor(descriptors[name], value);
+        }
+
+        function readDescriptor(descriptor) {
+            if (hasOwnProperty.call(descriptor, "value")) {
+                return descriptor.value;
+            } else {
+                return descriptor.get.call(obj);
+            }
+        }
+
+        function writeDescriptor(descriptor, value) {
+            if (hasOwnProperty.call(descriptor, "value")) {
+                descriptor.value = value;
+            } else {
+                descriptor.set.call(obj, value);
+            }
+        }
+
         function copyUnshadowedProperties(prototype) {
-            var name;
+            var name,
+                descriptor;
 
             for (name in prototype) {
+                // Determine whether we are not shadowing the property, so we should inherit it
                 if (!transport.getOwnPropertyDescriptor(name)) {
                     unshadowedProperties[name] = true;
 
-                    transport.defineProperty(name,
-                        prototype[transportName] ?
+                    descriptor = prototype[transportName] ?
                         prototype[transportName].getOwnPropertyDescriptor(name) : {
                             value: prototype[name]
-                        }
-                    );
+                        };
+
+                    transport.defineProperty(name, (function (descriptor) {
+                        return {
+                            get: function () {
+                                return readDescriptor(descriptor);
+                            },
+                            set: function (value) {
+                                writeDescriptor(descriptor, value);
+                            }
+                        };
+                    }(descriptor)));
                 }
             }
         }
