@@ -24,6 +24,7 @@
     var global = new [Function][0]("return this;")(),
         Object = global.Object,
         document = global.document,
+        sandbox = null,
         needsAccessorShim = !!global.execScript,
         namespacePath = null,
         namespaceName = "accessorIE",
@@ -139,17 +140,22 @@
     }
 
     function setupComponent() {
-        var namespace = document.namespaces.add(namespaceName);
+        sandbox = new global.ActiveXObject("htmlfile");
 
-        document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "<?import namespace='" + namespaceName + "' implementation='" + namespacePath + "'> /");
-
-        namespace.doImport(namespacePath);
+        sandbox.open();
+        sandbox.write(
+            "<head>" +
+                "<?import namespace='" + namespaceName + "' />" +
+                "<script>document.namespaces['" + namespaceName + "'].doImport('" + namespacePath + "');</script>" +
+            "</head>"
+        );
+        sandbox.close();
     }
 
     function createObject() {
-        var obj = document.createElement(namespaceName + ":object");
+        var obj = sandbox.createElement(namespaceName + ":object");
 
-        document.appendChild(obj);
+        sandbox.appendChild(obj);
 
         if (!obj[transportName]) {
             throw new Error("accessorIE shim .htc missing or served with wrong MIME type");
