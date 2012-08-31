@@ -25,9 +25,28 @@
         Object = global.Object,
         document = global.document,
         needsAccessorShim = !!global.execScript,
-        namespacePath = "/accessorIE/components/accessorIE.htc",
+        namespacePath = null,
         namespaceName = "accessorIE",
         transportName = "__transport__";
+
+    each(document.getElementsByTagName("script"), function () {
+        var path = this.src,
+            parts;
+
+        if (/accessorIE\.js$/.test(path)) {
+            parts = path.split("/");
+            parts.splice(parts.length - 2, 2, "components", "accessorIE.htc");
+            namespacePath = parts.join("/");
+
+            alert(namespacePath);
+
+            return false;
+        }
+    });
+
+    if (namespacePath === null) {
+        throw new Error("accessorIE script not found for path extraction");
+    }
 
     if (!Object.keys) {
         Object.keys = function (obj) {
