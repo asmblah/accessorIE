@@ -109,7 +109,9 @@
 
                     descriptor = prototype[transportName] ?
                         prototype[transportName].getOwnPropertyDescriptor(name) : {
-                            value: prototype[name]
+                            get: function () {
+                                return prototype[name];
+                            }
                         };
 
                     transport.defineProperty(name, (function (descriptor) {
