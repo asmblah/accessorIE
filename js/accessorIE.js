@@ -38,8 +38,6 @@
             parts.splice(parts.length - 2, 2, "components", "accessorIE.htc");
             namespacePath = parts.join("/");
 
-            alert(namespacePath);
-
             return false;
         }
     });
@@ -78,7 +76,6 @@
 
             Object.defineProperties = function (obj, descriptors) {
                 each(descriptors, function (descriptor, name) {
-                    //alert(name);
                     Object.defineProperty(obj, name, descriptor);
                 });
 
