@@ -2,6 +2,7 @@
     <script type="text/javascript" id="script">
         var hasOwnProperty = {}.hasOwnProperty,
             descriptors = {},
+            unshadowedProperties = {},
             elements = {},
             container = script.parentNode,
             transport,
@@ -36,7 +37,7 @@
 
                 if (descriptors[name]) {
                     // May have changed type from property <-> method
-                    container.removeChild(elements[name]);
+                    unbindProperty(name);
 
                     for (attribute in descriptor) {
                         if (hasOwnProperty.call(descriptor, attribute)) {
@@ -62,7 +63,18 @@
                 container.insertBefore(element, script);
             },
 
+            deleteProperty: function (name) {
+                unbindProperty(name);
+                delete descriptors[name];
+            },
+
             getOwnPropertyDescriptor: function (name) {
+                if (!descriptors[name] && hasOwnProperty.call(obj, name)) {
+                    descriptors[name] = {
+                        value: obj[name]
+                    };
+                }
+
                 return descriptors[name];
             }
         };
@@ -74,8 +86,43 @@
                 return prototype;
             },
             set: function (value) {
+                deleteUnshadowedProperties();
+
                 prototype = value;
+
+                copyUnshadowedProperties(prototype);
             }
         });
+
+        function copyUnshadowedProperties(prototype) {
+            var name;
+
+            for (name in prototype) {
+                if (!transport.getOwnPropertyDescriptor(name)) {
+                    unshadowedProperties[name] = true;
+
+                    transport.defineProperty(name,
+                        prototype[transportName] ?
+                        prototype[transportName].getOwnPropertyDescriptor(name) : {
+                            value: prototype[name]
+                        }
+                    );
+                }
+            }
+        }
+
+        function deleteUnshadowedProperties() {
+            var name;
+
+            for (name in unshadowedProperties) {
+                transport.deleteProperty(name);
+            }
+
+            unshadowedProperties = {};
+        }
+
+        function unbindProperty(name) {
+            container.removeChild(elements[name]);
+        }
     </script>
 </public:component>
