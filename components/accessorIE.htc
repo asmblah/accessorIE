@@ -4,7 +4,9 @@
             descriptors = {},
             elements = {},
             container = script.parentNode,
+            transport,
             transportName = "__transport__",
+            prototype = null,
             obj = element;
 
         function get(name) {
@@ -27,7 +29,7 @@
             }
         }
 
-        element[transportName] = {
+        transport = {
             defineProperty: function (name, descriptor) {
                 var element,
                     attribute;
@@ -64,5 +66,16 @@
                 return descriptors[name];
             }
         };
+
+        element[transportName] = transport;
+
+        transport.defineProperty("__proto__", {
+            get: function () {
+                return prototype;
+            },
+            set: function (value) {
+                prototype = value;
+            }
+        });
     </script>
 </public:component>
