@@ -87,6 +87,10 @@
                 return obj[transportName].getOwnPropertyDescriptor(name);
             };
 
+            Object.getPrototypeOf = function (obj) {
+                return obj.__proto__;
+            };
+
             Object.create = (function (parent) {
                 return function (extend, propertyDescriptors) {
                     var obj;
