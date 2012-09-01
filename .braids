@@ -6,3 +6,10 @@ vendor/mocha:
   squashed: true
   type: git
   url: git://github.com/asmblah/mocha.git
+vendor/modular: 
+  branch: master
+  remote: master/braid/vendor/modular
+  revision: 176384fa4fa0e4fcad937832f954bc1650e928d3
+  squashed: true
+  type: git
+  url: git://github.com/asmblah/modular.git
