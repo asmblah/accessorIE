@@ -206,16 +206,6 @@
         };
     }
 
-    if (!global.TypeError) {
-        (function () {
-            function TypeError(msg) {
-                Error.call(msg);
-            }
-            TypeError.prototype = Object.create(Error.prototype);
-            global.TypeError = TypeError;
-        }());
-    }
-
     if (!Object.create) {
         Object.create = function (extend) {
             function Fn() {}
@@ -322,6 +312,17 @@
                 }
             }(Object.create));
         }
+    }
+
+    // IE8 provides TypeError, but it behaves oddly, so override it
+    if (!global.TypeError || global.TypeError instanceof global.Error) {
+        (function () {
+            function TypeError(msg) {
+                Error.call(msg);
+            }
+            TypeError.prototype = Object.create(Error.prototype);
+            global.TypeError = TypeError;
+        }());
     }
 
     // ES5 9.9
