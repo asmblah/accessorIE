@@ -17,45 +17,42 @@
             prototype = null,
             nextID = 0;
 
+        function isDataDescriptor(descriptor) {
+            return hasOwnProperty.call(descriptor, "value") || hasOwnProperty.call(descriptor, "writable");
+        }
+
+        function normalizeDescriptor(descriptor) {
+            descriptor.configurable = descriptor.configurable || false;
+            descriptor.enumerable = descriptor.enumerable || false;
+
+            if (isDataDescriptor(descriptor)) {
+                delete descriptor.get;
+                delete descriptor.set;
+                descriptor.writable = descriptor.writable || false;
+            } else {
+                delete descriptor.writable;
+            }
+        }
+
         transport = {
-            defineProperty: function (name, descriptor) {
+            defineProperty: function (name, newDescriptor) {
                 var element,
                     attribute,
-                    id = "id_" + nextID;
+                    id = "id_" + nextID,
+                    descriptor = descriptors[name];
 
-                if (descriptors[name]) {
-                    // May have changed type from property <-> method
-                    unbindProperty(name);
-
-                    // Data descriptor
-                    if (hasOwnProperty.call(descriptor, "value")) {
-                        delete descriptors[name].get;
-                        delete descriptors[name].set;
-                        descriptors[name].value = descriptor.value;
-                        if (hasOwnProperty.call(descriptor, "writable")) {
-                            descriptors[name].writable = descriptor.writable;
-                        }
-                    // Accessor descriptor
-                    } else {
-                        if (hasOwnProperty.call(descriptor, "get")) {
-                            descriptors[name].get = descriptor.get;
-                        }
-                        if (hasOwnProperty.call(descriptor, "set")) {
-                            descriptors[name].set = descriptor.set;
-                        }
-                        delete descriptors[name].value;
-                        delete descriptors[name].writable;
-                    }
-
-                    if (hasOwnProperty.call(descriptor, "configurable")) {
-                        descriptors[name].configurable = descriptor.configurable;
-                    }
-                    if (hasOwnProperty.call(descriptor, "enumerable")) {
-                        descriptors[name].enumerable = descriptor.enumerable;
-                    }
-                } else {
+                if (!descriptor) {
+                    descriptor = {};
                     descriptors[name] = descriptor;
                 }
+
+                for (attribute in newDescriptor) {
+                    if (newDescriptor.hasOwnProperty(attribute)) {
+                        descriptor[attribute] = newDescriptor[attribute];
+                    }
+                }
+
+                normalizeDescriptor(descriptor);
 
                 if ((descriptor.value && typeof descriptor.value === "function") || descriptor.method) {
                     //element = document.createElement("<public:method name='" + name + "' internalName='" + id + "' />");
