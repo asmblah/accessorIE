@@ -76,7 +76,7 @@ define([
 
                 obj.__proto__ = null;
 
-                expect(obj.test).to.be.an("undefined");
+                expect(obj.test).to.be.undefined;
             });
         });
     });
