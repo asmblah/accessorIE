@@ -23,7 +23,6 @@
 
     var hasOwnProperty = {}.hasOwnProperty,
         toString = {}.toString,
-        noStringIndex = "a"[0] !== "a",
         undefined = void 0,
         global = new [Function][0]("return this;")(),
         Object = global.Object,
@@ -51,6 +50,14 @@
             "offsetHeight", "clientTop", "clientWidth", "tagUrn", "clientLeft", "all", "offsetLeft"
         ];
 
+    if (!needsAccessorShim) {
+        throw new Error("accessorIE should not be used by non-IE browsers: use a conditional comment");
+    }
+
+    if (Object.create) {
+        throw new Error("accessorIE should not be used by IE >= v9: use a conditional comment");
+    }
+
     each(document.getElementsByTagName("script"), function () {
         var path = this.src,
             parts;
@@ -67,6 +74,8 @@
     if (namespacePath === null) {
         throw new Error("accessorIE script not found for path extraction");
     }
+
+    setupComponent();
 
     each([
         "shift", "sort", "concat", "filter",
@@ -89,241 +98,212 @@
         };
     }
 
-    if (!Array.isArray) {
-        Array.isArray = function (obj) {
-            return toString.call(obj) === "[object Array]";
-        };
-    }
+    Array.isArray = function (obj) {
+        return toString.call(obj) === "[object Array]";
+    };
 
-    if (!Array.prototype.forEach) {
-        Array.prototype.forEach = function (callback, thisObj) {
-            var index,
-                length = this.length;
+    Array.prototype.forEach = function (callback, thisObj) {
+        var index,
+            length = this.length;
 
-            thisObj = thisObj || this;
+        thisObj = thisObj || this;
 
-            for (index = 0; index < length; index += 1) {
-                callback.call(thisObj, this[index], index, this);
+        for (index = 0; index < length; index += 1) {
+            callback.call(thisObj, this[index], index, this);
+        }
+    };
+
+    Array.prototype.indexOf = function (value) {
+        var index,
+            length = this.length;
+
+        for (index = 0; index < length; index += 1) {
+            if (this[index] === value) {
+                return index;
             }
-        };
-    }
+        }
 
-    if (!Array.prototype.indexOf) {
-        Array.prototype.indexOf = function (value) {
-            var index,
-                length = this.length;
-
-            for (index = 0; index < length; index += 1) {
-                if (this[index] === value) {
-                    return index;
-                }
-            }
-
-            return -1;
-        };
-    }
+        return -1;
+    };
 
     // ES5 15.4.4.19
     // http://es5.github.com/#x15.4.4.19
     // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/map
-    if (!Array.prototype.map) {
-        Array.prototype.map = function map(callback, thisArg) {
-            var self = toObject(this),
-                length = self.length >>> 0,
-                result = Array(length),
-                index;
+    Array.prototype.map = function map(callback, thisArg) {
+        var self = toObject(this),
+            length = self.length >>> 0,
+            result = Array(length),
+            index;
 
-            // If no callback function or if callback is not a callable function
-            if (toString.call(callback) !== "[object Function]") {
-                throw new TypeError(callback + " is not a function");
+        // If no callback function or if callback is not a callable function
+        if (toString.call(callback) !== "[object Function]") {
+            throw new TypeError(callback + " is not a function");
+        }
+
+        for (index = 0; index < length; index += 1) {
+            if (index in self) {
+                result[index] = callback.call(thisArg, self[index], index, self);
             }
+        }
 
-            for (index = 0; index < length; index += 1) {
-                if (index in self) {
-                    result[index] = callback.call(thisArg, self[index], index, self);
-                }
-            }
-
-            return result;
-        };
-    }
+        return result;
+    };
 
     // ES5 15.4.4.21
     // http://es5.github.com/#x15.4.4.21
     // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/reduce
-    if (!Array.prototype.reduce) {
-        Array.prototype.reduce = function reduce(callback, initial) {
-            var self = toObject(this),
-                length = self.length >>> 0,
-                index = 0,
-                result;
+    Array.prototype.reduce = function reduce(callback, initial) {
+        var self = toObject(this),
+            length = self.length >>> 0,
+            index = 0,
+            result;
 
-            // If no callback function or if callback is not a callable function
-            if (toString.call(callback) != "[object Function]") {
-                throw new TypeError(callback + " is not a function");
-            }
-
-            // no value to return if no initial value and an empty array
-            if (!length && arguments.length == 1) {
-                throw new TypeError('reduce of empty array with no initial value');
-            }
-
-            if (arguments.length >= 2) {
-                result = initial;
-            } else {
-                do {
-                    if (index in self) {
-                        result = self[index++];
-                        break;
-                    }
-
-                    // if array contains no values, no initial value to return
-                    if (++index >= length) {
-                        throw new TypeError('reduce of empty array with no initial value');
-                    }
-                } while (true);
-            }
-
-            for (; index < length; index += 1) {
-                if (index in self) {
-                    result = callback.call(undefined, result, self[index], index, self);
-                }
-            }
-
-            return result;
-        };
-    }
-
-    if (!Object.keys) {
-        Object.keys = function (obj) {
-            var keys = [];
-
-            for (key in obj) {
-                keys.push(key);
-            }
-
-            return keys;
-        };
-    }
-
-    if (!Object.create) {
-        Object.create = function (extend) {
-            function Fn() {}
-            Fn.prototype = extend;
-            return new Fn();
-        };
-
-        if (needsAccessorShim) {
-            setupComponent();
-
-            Object.defineProperty = function (obj, name, descriptor) {
-                if (typeof descriptor !== "object" || descriptor === null) {
-                    throw new TypeError("Property description must be an object: " + descriptor);
-                }
-
-                if (obj[transportName]) {
-                    obj[transportName].defineProperty(name, descriptor);
-                } else {
-                    if (!hasOwnProperty.call(descriptor, "value")) {
-                        throw new Error("Object.defineProperty() :: Only data descriptors supported on JScript objects");
-                    }
-
-                    obj[name] = descriptor.value;
-                }
-
-                return obj;
-            };
-
-            Object.defineProperties = function (obj, descriptors) {
-                each(descriptors, function (descriptor, name) {
-                    Object.defineProperty(obj, name, descriptor);
-                }, { keys: true });
-
-                return obj;
-            };
-
-            Object.getOwnPropertyDescriptor = function (obj, name) {
-                if (obj[transportName]) {
-                    return obj[transportName].getOwnPropertyDescriptor(name);
-                }
-
-                return {
-                    configurable: true,
-                    enumerable: true,
-                    value: obj[name],
-                    writable: true
-                };
-            };
-
-            Object.getOwnPropertyNames = function (obj) {
-                var name,
-                    names,
-                    lookup;
-
-                if (typeof obj !== "object") {
-                    throw new TypeError("Object.getOwnPropertyNames called on non-object");
-                }
-
-                if (obj === Array.prototype) {
-                    names = info.array.names.slice();
-                    lookup = Object.create(info.array.lookup);
-                } else {
-                    names = [];
-                    lookup = {};
-                }
-
-                for (name in obj) {
-                    if (hasOwnProperty.call(obj, name) && !lookup[name]) {
-                        names.push(name);
-                        lookup[name] = true;
-                    }
-                }
-
-                if (obj[transportName]) {
-                    names = names.concat(obj[transportName].getOwnPropertyNames(lookup));
-                }
-
-                return names;
-            };
-
-            Object.create = (function (parent) {
-                return function (extend, propertyDescriptors) {
-                    var obj;
-
-                    if (extend === null || extend === Array.prototype) {
-                        obj = createObject();
-
-                        if (extend) {
-                            obj.__proto__ = extend;
-                        }
-
-                        if (propertyDescriptors) {
-                            Object.defineProperties(obj, propertyDescriptors);
-                        }
-
-                        return obj;
-                    }
-
-                    if (propertyDescriptors) {
-                        throw new Error("Shim can only work for IE when extending null");
-                    }
-
-                    return parent(extend);
-                }
-            }(Object.create));
+        // If no callback function or if callback is not a callable function
+        if (toString.call(callback) != "[object Function]") {
+            throw new TypeError(callback + " is not a function");
         }
-    }
 
-    // IE8 provides TypeError, but it behaves oddly, so override it
-    if (!global.TypeError || global.TypeError instanceof global.Error) {
-        (function () {
-            function TypeError(msg) {
-                Error.call(msg);
+        // no value to return if no initial value and an empty array
+        if (!length && arguments.length == 1) {
+            throw new TypeError('reduce of empty array with no initial value');
+        }
+
+        if (arguments.length >= 2) {
+            result = initial;
+        } else {
+            do {
+                if (index in self) {
+                    result = self[index++];
+                    break;
+                }
+
+                // if array contains no values, no initial value to return
+                if (++index >= length) {
+                    throw new TypeError('reduce of empty array with no initial value');
+                }
+            } while (true);
+        }
+
+        for (; index < length; index += 1) {
+            if (index in self) {
+                result = callback.call(undefined, result, self[index], index, self);
             }
-            TypeError.prototype = Object.create(Error.prototype);
-            global.TypeError = TypeError;
-        }());
-    }
+        }
+
+        return result;
+    };
+
+    Object.keys = function (obj) {
+        var keys = [];
+
+        for (key in obj) {
+            keys.push(key);
+        }
+
+        return keys;
+    };
+
+    Object.create = function (extend, propertyDescriptors) {
+        var obj;
+
+        if (extend === null || extend === Array.prototype) {
+            obj = createObject();
+
+            if (extend) {
+                obj.__proto__ = extend;
+            }
+
+            if (propertyDescriptors) {
+                Object.defineProperties(obj, propertyDescriptors);
+            }
+
+            return obj;
+        }
+
+        if (propertyDescriptors) {
+            throw new Error("Shim can only work for IE when extending null or Array.prototype");
+        }
+
+        function Fn() {}
+        Fn.prototype = extend;
+        return new Fn();
+    };
+
+    Object.defineProperty = function (obj, name, descriptor) {
+        if (typeof descriptor !== "object" || descriptor === null) {
+            throw new TypeError("Property description must be an object: " + descriptor);
+        }
+
+        if (obj[transportName]) {
+            obj[transportName].defineProperty(name, descriptor);
+        } else {
+            if (!hasOwnProperty.call(descriptor, "value")) {
+                throw new Error("Object.defineProperty() :: Only data descriptors supported on JScript objects");
+            }
+
+            obj[name] = descriptor.value;
+        }
+
+        return obj;
+    };
+
+    Object.defineProperties = function (obj, descriptors) {
+        each(descriptors, function (descriptor, name) {
+            Object.defineProperty(obj, name, descriptor);
+        }, { keys: true });
+
+        return obj;
+    };
+
+    Object.getOwnPropertyDescriptor = function (obj, name) {
+        if (obj[transportName]) {
+            return obj[transportName].getOwnPropertyDescriptor(name);
+        }
+
+        return {
+            configurable: true,
+            enumerable: true,
+            value: obj[name],
+            writable: true
+        };
+    };
+
+    Object.getOwnPropertyNames = function (obj) {
+        var name,
+            names,
+            lookup;
+
+        if (typeof obj !== "object") {
+            throw new TypeError("Object.getOwnPropertyNames called on non-object");
+        }
+
+        if (obj === Array.prototype) {
+            names = info.array.names.slice();
+            lookup = Object.create(info.array.lookup);
+        } else {
+            names = [];
+            lookup = {};
+        }
+
+        for (name in obj) {
+            if (hasOwnProperty.call(obj, name) && !lookup[name]) {
+                names.push(name);
+                lookup[name] = true;
+            }
+        }
+
+        if (obj[transportName]) {
+            names = names.concat(obj[transportName].getOwnPropertyNames(lookup));
+        }
+
+        return names;
+    };
+
+    // IE8 does actually provide TypeError, but it behaves oddly, so override it anyway
+    global.TypeError = function (msg) {
+        Error.call(msg);
+    };
+    global.TypeError.prototype = Object.create(Error.prototype);
 
     // ES5 9.9
     // http://es5.github.com/#x9.9
@@ -332,9 +312,8 @@
             throw new TypeError("can't convert " + obj + " to object");
         }
 
-        // If the implementation doesn't support by-index access of string characters (ex. IE < 9),
-        // split the string
-        if (noStringIndex && typeof obj === "string" && obj) {
+        // IE < v9 doesn't support by-index access of string characters
+        if (typeof obj === "string" && obj) {
             return obj.split("");
         }
 
