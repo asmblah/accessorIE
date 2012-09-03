@@ -127,7 +127,7 @@
                 return prototype;
             },
             set: function (value) {
-                //deleteUnshadowedProperties();
+                deleteUnshadowedProperties();
 
                 prototype = value;
 
