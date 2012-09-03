@@ -23,6 +23,7 @@
 
     var hasOwnProperty = {}.hasOwnProperty,
         toString = {}.toString,
+        noStringIndex = "a"[0] !== "a",
         global = new [Function][0]("return this;")(),
         Object = global.Object,
         Array = global.Array,
@@ -118,6 +119,31 @@
             }
 
             return -1;
+        };
+    }
+
+    // ES5 15.4.4.19
+    // http://es5.github.com/#x15.4.4.19
+    // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/map
+    if (!Array.prototype.map) {
+        Array.prototype.map = function map(callback, thisArg) {
+            var self = toObject(this),
+                length = self.length >>> 0,
+                result = Array(length),
+                index;
+
+            // If no callback function or if callback is not a callable function
+            if (toString.call(callback) !== "[object Function]") {
+                throw new TypeError(callback + " is not a function");
+            }
+
+            for (index = 0; index < length; index += 1) {
+                if (index in self) {
+                    result[index] = callback.call(thisArg, self[index], index, self);
+                }
+            }
+
+            return result;
         };
     }
 
@@ -249,6 +275,22 @@
                 }
             }(Object.create));
         }
+    }
+
+    // ES5 9.9
+    // http://es5.github.com/#x9.9
+    function toObject(obj) {
+        if (obj === null || typeof obj === "undefined") {
+            throw new TypeError("can't convert " + obj + " to object");
+        }
+
+        // If the implementation doesn't support by-index access of string characters (ex. IE < 9),
+        // split the string
+        if (noStringIndex && typeof obj === "string" && obj) {
+            return obj.split("");
+        }
+
+        return Object(obj);
     }
 
     function each(object, callback, options) {
