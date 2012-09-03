@@ -24,6 +24,7 @@
     var hasOwnProperty = {}.hasOwnProperty,
         toString = {}.toString,
         noStringIndex = "a"[0] !== "a",
+        undefined = void 0,
         global = new [Function][0]("return this;")(),
         Object = global.Object,
         Array = global.Array,
@@ -140,6 +141,52 @@
             for (index = 0; index < length; index += 1) {
                 if (index in self) {
                     result[index] = callback.call(thisArg, self[index], index, self);
+                }
+            }
+
+            return result;
+        };
+    }
+
+    // ES5 15.4.4.21
+    // http://es5.github.com/#x15.4.4.21
+    // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/reduce
+    if (!Array.prototype.reduce) {
+        Array.prototype.reduce = function reduce(callback, initial) {
+            var self = toObject(this),
+                length = self.length >>> 0,
+                index = 0,
+                result;
+
+            // If no callback function or if callback is not a callable function
+            if (toString.call(callback) != "[object Function]") {
+                throw new TypeError(callback + " is not a function");
+            }
+
+            // no value to return if no initial value and an empty array
+            if (!length && arguments.length == 1) {
+                throw new TypeError('reduce of empty array with no initial value');
+            }
+
+            if (arguments.length >= 2) {
+                result = initial;
+            } else {
+                do {
+                    if (index in self) {
+                        result = self[index++];
+                        break;
+                    }
+
+                    // if array contains no values, no initial value to return
+                    if (++index >= length) {
+                        throw new TypeError('reduce of empty array with no initial value');
+                    }
+                } while (true);
+            }
+
+            for (; index < length; index += 1) {
+                if (index in self) {
+                    result = callback.call(undefined, result, self[index], index, self);
                 }
             }
 
