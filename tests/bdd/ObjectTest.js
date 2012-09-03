@@ -37,6 +37,16 @@ define([
                 expect(obj.length).to.equal(7);
             });
 
+            it("should support numeric property names", function () {
+                Object.defineProperty(obj, 7, {
+                    get: function () {
+                        return 5;
+                    }
+                });
+
+                expect(obj[7]).to.equal(5);
+            });
+
             it("should work with existing DOM objects", function () {
                 var obj = document.createElement("span");
 
