@@ -147,6 +147,10 @@
             setupComponent();
 
             Object.defineProperty = function (obj, name, descriptor) {
+                if (typeof descriptor !== "object" || descriptor === null) {
+                    throw new TypeError("Property description must be an object: " + descriptor);
+                }
+
                 if (obj[transportName]) {
                     obj[transportName].defineProperty(name, descriptor);
                 } else {
