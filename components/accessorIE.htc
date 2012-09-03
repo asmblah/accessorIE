@@ -4,43 +4,76 @@
             descriptors = {},
             unshadowedProperties = {},
             elements = {},
+            pageGlobal,
+            behaviorGlobal = (function () { return this; }()), // DispHTCDefaultDispatch
+            obj = element,
+            document = behaviorGlobal.document,
+            Array,
+            Object,
+            script = document.getElementById("script"),
             container = script.parentNode,
             transport,
             transportName = "__transport__",
             prototype = null,
-            obj = element;
+            nextID = 0;
 
         transport = {
             defineProperty: function (name, descriptor) {
                 var element,
-                    attribute;
+                    attribute,
+                    id = "id_" + nextID;
 
                 if (descriptors[name]) {
                     // May have changed type from property <-> method
                     unbindProperty(name);
 
-                    for (attribute in descriptor) {
-                        if (hasOwnProperty.call(descriptor, attribute)) {
-                            descriptors[name][attribute] = descriptor[attribute];
+                    // Data descriptor
+                    if (hasOwnProperty.call(descriptor, "value")) {
+                        delete descriptors[name].get;
+                        delete descriptors[name].set;
+                        descriptors[name].value = descriptor.value;
+                        if (hasOwnProperty.call(descriptor, "writable")) {
+                            descriptors[name].writable = descriptor.writable;
                         }
+                    // Accessor descriptor
+                    } else {
+                        if (hasOwnProperty.call(descriptor, "get")) {
+                            descriptors[name].get = descriptor.get;
+                        }
+                        if (hasOwnProperty.call(descriptor, "set")) {
+                            descriptors[name].set = descriptor.set;
+                        }
+                        delete descriptors[name].value;
+                        delete descriptors[name].writable;
+                    }
+
+                    if (hasOwnProperty.call(descriptor, "configurable")) {
+                        descriptors[name].configurable = descriptor.configurable;
+                    }
+                    if (hasOwnProperty.call(descriptor, "enumerable")) {
+                        descriptors[name].enumerable = descriptor.enumerable;
                     }
                 } else {
                     descriptors[name] = descriptor;
                 }
 
-                if (descriptor.value && typeof descriptor.value === "function") {
-                    element = document.createElement("<public:method name='" + name + "' />");
+                if ((descriptor.value && typeof descriptor.value === "function") || descriptor.method) {
+                    //element = document.createElement("<public:method name='" + name + "' internalName='" + id + "' />");
 
-                    script.text = "var " + name + " = descriptors['" + name + "'].value";
+                    //eval(id + " = function () { return methodfy(get('" + name + "')).apply(this, arguments); };");
+
+                    obj[name] = function () { return methodfy(get(name)).apply(this, arguments); };
                 } else {
-                    element = document.createElement("<public:property name='" + name + "' get='get_" + name + "' put='set_" + name + "' />");
+                    element = document.createElement("<public:property name='" + name + "' get='get_" + id + "' put='set_" + id + "' />");
 
-                    script.text = "function get_" + name + "() { return get('" + name + "'); } function set_" + name + "(value) { set('" + name + "', value); }";
+                    eval("get_" + id + " = function () { return get('" + name + "'); }; set_" + id + " = function (value) { set('" + name + "', value); };");
+
+                    nextID += 1;
+
+                    elements[name] = element;
+
+                    container.insertBefore(element, script);
                 }
-
-                elements[name] = element;
-
-                container.insertBefore(element, script);
             },
 
             deleteProperty: function (name) {
@@ -48,14 +81,42 @@
                 delete descriptors[name];
             },
 
+            init: function (scope) {
+                pageScope = scope;
+                Array = pageScope.Array;
+                Object = pageScope.Object;
+
+                return obj;
+            },
+
             getOwnPropertyDescriptor: function (name) {
-                if (!descriptors[name] && hasOwnProperty.call(obj, name)) {
-                    descriptors[name] = {
+                var descriptor = descriptors[name];
+
+                if (!descriptor && hasOwnProperty.call(obj, name)) {
+                    descriptor = {
                         value: obj[name]
                     };
+
+                    transport.defineProperty(name, descriptor);
                 }
 
-                return descriptors[name];
+                return descriptor;
+            },
+
+            getOwnPropertyNames: function (lookup) {
+                var name,
+                    names = [];
+
+                lookup = lookup || {};
+
+                for (name in descriptors) {
+                    if (hasOwnProperty.call(obj, name) && !lookup[name]) {
+                        names.push(name);
+                        lookup[name] = true;
+                    }
+                }
+
+                return names;
             }
         };
 
@@ -66,20 +127,76 @@
                 return prototype;
             },
             set: function (value) {
-                deleteUnshadowedProperties();
+                //deleteUnshadowedProperties();
 
                 prototype = value;
 
-                copyUnshadowedProperties(prototype);
+                if (value !== null) {
+                    copyUnshadowedProperties(prototype);
+                }
             }
         });
+
+        /*obj.attachEvent("onpropertychange", function (evt) {
+            var name = evt.propertyName;
+
+            alert(name);
+        });*/
+
+        /*var silenceSets = false;
+
+        function silentSet(name, value) {
+            silenceSets = true;
+
+            obj[name] = value;
+
+            silenceSets = false;
+        }*/
 
         function get(name) {
             return readDescriptor(descriptors[name]);
         }
 
         function set(name, value) {
+            /*if (silenceSets) {
+                return;
+            }*/
+
             writeDescriptor(descriptors[name], value);
+        }
+
+        function methodfy(fn) {
+            if (fn === Array.prototype.push) {
+                return function () {
+                    var index,
+                        length = arguments.length,
+                        arrayLength = this.length || 0;
+
+                    for (index = 0; index < length; index += 1) {
+                        this[arrayLength] = arguments[index];
+                        arrayLength += 1;
+                    }
+
+                    this.length = arrayLength;
+                };
+            }
+            if (fn === Array.prototype.pop) {
+                return function () {
+                    var arrayLength = this.length || 0;
+
+                    if (arrayLength > 0) {
+                        try {
+                            delete this[arrayLength];
+                        } catch (error) {
+                            this[arrayLength] = undefined;
+                        }
+
+                        this.length = arrayLength - 1;
+                    }
+                };
+            }
+
+            return fn;
         }
 
         function readDescriptor(descriptor) {
@@ -100,30 +217,24 @@
 
         function copyUnshadowedProperties(prototype) {
             var name,
-                descriptor;
+                descriptor,
+                index,
+                name,
+                names = Object.getOwnPropertyNames(prototype);
 
-            for (name in prototype) {
+            for (index = 0; index < names.length; index += 1) {
+                name = names[index];
+
                 // Determine whether we are not shadowing the property, so we should inherit it
                 if (!transport.getOwnPropertyDescriptor(name)) {
                     unshadowedProperties[name] = true;
 
-                    descriptor = prototype[transportName] ?
-                        prototype[transportName].getOwnPropertyDescriptor(name) : {
-                            get: function () {
-                                return prototype[name];
-                            }
-                        };
-
-                    transport.defineProperty(name, (function (descriptor) {
-                        return {
-                            get: function () {
-                                return readDescriptor(descriptor);
-                            },
-                            set: function (value) {
-                                writeDescriptor(descriptor, value);
-                            }
-                        };
-                    }(descriptor)));
+                    transport.defineProperty(name, (function (name) {
+                        return prototype[transportName] ?
+                            prototype[transportName].getOwnPropertyDescriptor(name) : {
+                                value: prototype[name]
+                            };
+                    }(name)));
                 }
             }
         }
@@ -139,7 +250,10 @@
         }
 
         function unbindProperty(name) {
-            container.removeChild(elements[name]);
+            if (elements[name]) {
+                container.removeChild(elements[name]);
+                delete elements[name];
+            }
         }
     </script>
 </public:component>
