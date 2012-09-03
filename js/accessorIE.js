@@ -93,6 +93,19 @@
         };
     }
 
+    if (!Array.prototype.forEach) {
+        Array.prototype.forEach = function (callback, thisObj) {
+            var index,
+                length = this.length;
+
+            thisObj = thisObj || this;
+
+            for (index = 0; index < length; index += 1) {
+                callback.call(thisObj, this[index], index, this);
+            }
+        };
+    }
+
     if (!Array.prototype.indexOf) {
         Array.prototype.indexOf = function (value) {
             var index,
@@ -105,19 +118,6 @@
             }
 
             return -1;
-        };
-    }
-
-    if (!Array.prototype.forEach) {
-        Array.prototype.forEach = function (callback, thisObj) {
-            var index,
-                length = this.length;
-
-            thisObj = thisObj || this;
-
-            for (index = 0; index < length; index += 1) {
-                callback.call(thisObj, this[index], index, this);
-            }
         };
     }
 
