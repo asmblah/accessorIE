@@ -22,6 +22,7 @@
     "use strict";
 
     var hasOwnProperty = {}.hasOwnProperty,
+        toString = {}.toString,
         global = new [Function][0]("return this;")(),
         Object = global.Object,
         Array = global.Array,
@@ -83,6 +84,12 @@
         global.console = {
             error: function () {},
             log: function () {}
+        };
+    }
+
+    if (!Array.isArray) {
+        Array.isArray = function (obj) {
+            return toString.call(obj) === "[object Array]";
         };
     }
 
