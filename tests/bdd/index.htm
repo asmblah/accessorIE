@@ -4,19 +4,18 @@
         <meta charset="UTF-8" />
 
         <title>accessorIE - ES5 Accessors for JavaScript in IE v6+</title>
+        <!--[if lt IE 9]><script type="text/javascript" src="../../js/accessorIE.js"></script><![endif]-->
 
         <link rel="stylesheet" href="../../vendor/mocha/mocha.css" />
         <script type="text/javascript" src="../../vendor/modular/modular.js"></script>
         <script type="text/javascript" src="../../vendor/mocha/mocha.js"></script>
-        <script type="text/javascript" src="../../vendor/chai/chai.js"></script>
-        <script type="text/javascript" src="../../vendor/sinon/sinon.js"></script>
     </head>
     <body>
         <div id="mocha"></div>
 
         <script type="text/javascript">
             mocha.setup({
-                "ui": "tdd",
+                "ui": "bdd",
                 "reporter": mocha.reporters.HTML,
                 "globals": ["_gaq", "jQuery*", "setTimeout", "setInterval", "clearTimeout", "clearInterval"]
             });

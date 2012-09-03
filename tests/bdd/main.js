@@ -1,12 +1,13 @@
 require({
     paths: {
         "js": "/../../../js",
-        "tdd": ".",
+        "bdd": ".",
         "lib": "/../../../lib",
-        "orangeJS": "/../../../lib/orangeJS/js"
+        "orangeJS": "/../../../lib/orangeJS/js",
+        "vendor": "../../vendor"
     }
 }, [
-    "tdd/accessorIETest"
+    "bdd/ObjectTest"
 ], function () {
     "use strict";
 
