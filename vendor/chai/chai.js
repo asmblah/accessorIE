@@ -38,7 +38,7 @@
 
   require.relative = function (parent) {
     return function(p){
-      if ('.' != p[0]) return require(p);
+      if ('.' != p.charAt(0)) return require(p);
 
       var path = parent.split('/')
         , segs = p.split('/');
@@ -175,9 +175,14 @@
      */
 
     function Assertion (obj, msg, stack) {
-      flag(this, 'ssfi', stack || arguments.callee);
-      flag(this, 'object', obj);
-      flag(this, 'message', msg);
+      var assertion = Object.create(null);
+      assertion.__proto__ = Assertion.prototype;
+
+      flag(assertion, 'ssfi', stack || arguments.callee);
+      flag(assertion, 'object', obj);
+      flag(assertion, 'message', msg);
+
+      return assertion;
     }
 
     /*!
@@ -213,6 +218,8 @@
     Assertion.overwriteMethod = function (name, fn) {
       util.overwriteMethod(this.prototype, name, fn);
     };
+
+    Assertion.prototype = Object.create(null);
 
     /*!
      * ### .assert(expression, message, negateMessage, expected, actual)
@@ -2486,6 +2493,7 @@
             return assert;
           }
         , configurable: true
+        , method: true
       });
     };
 
