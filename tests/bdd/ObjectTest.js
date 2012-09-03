@@ -81,10 +81,10 @@ define([
 
             it("should be able to define a single property", function () {
                 var descriptor = {
-                    value: "Frank",
-                    writable: true,
+                    configurable: true,
                     enumerable: true,
-                    configurable: true
+                    value: "Frank",
+                    writable: true
                 };
 
                 Object.defineProperties(obj, {
