@@ -1,6 +1,7 @@
 <public:component>
     <script type="text/javascript" id="script">
         var hasOwnProperty = {}.hasOwnProperty,
+            undefined = void 0,
             descriptors = {},
             unshadowedProperties = {},
             elements = {},
@@ -18,7 +19,9 @@
             nextID = 0;
 
         function isDataDescriptor(descriptor) {
-            return hasOwnProperty.call(descriptor, "value") || hasOwnProperty.call(descriptor, "writable");
+            return hasOwnProperty.call(descriptor, "value") ||
+                hasOwnProperty.call(descriptor, "writable") ||
+                (!hasOwnProperty.call(descriptor, "get") && !hasOwnProperty.call(descriptor, "set"));
         }
 
         function normalizeDescriptor(descriptor) {
@@ -28,6 +31,9 @@
             if (isDataDescriptor(descriptor)) {
                 delete descriptor.get;
                 delete descriptor.set;
+                if (!hasOwnProperty.call(descriptor, "value")) {
+                    descriptor.value = undefined;
+                }
                 descriptor.writable = descriptor.writable || false;
             } else {
                 delete descriptor.writable;
@@ -173,6 +179,7 @@
                         this[arrayLength] = arguments[index];
                         arrayLength += 1;
                     }
+
 
                     this.length = arrayLength;
                 };

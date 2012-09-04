@@ -57,6 +57,32 @@ define([
                 expect(obj.prop).to.equal(9);
             });
 
+            it("should correctly handle only configurable being specified", function () {
+                Object.defineProperty(obj, "me", {
+                    configurable: true
+                });
+
+                expect(Object.getOwnPropertyDescriptor(obj, "me")).to.eql({
+                    configurable: true,
+                    enumerable: false,
+                    value: undefined,
+                    writable: false
+                });
+            });
+
+            it("should correctly handle only enumerable being specified", function () {
+                Object.defineProperty(obj, "me", {
+                    enumerable: true
+                });
+
+                expect(Object.getOwnPropertyDescriptor(obj, "me")).to.eql({
+                    configurable: true,
+                    enumerable: true,
+                    value: undefined,
+                    writable: false
+                });
+            });
+
             describe("for a data descriptor", function () {
                 it("should default 'configurable' data descriptor attribute to false", function () {
                     Object.defineProperty(obj, "parent", {
