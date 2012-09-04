@@ -97,6 +97,52 @@ define([
 
                     expect(Object.getOwnPropertyDescriptor(obj, "parent").writable).to.equal(false);
                 });
+
+                it("should work with existing DOM objects", function () {
+                    var obj = document.createElement("span");
+
+                    Object.defineProperty(obj, "prop", {
+                        value: 9
+                    });
+
+                    expect(obj.prop).to.equal(9);
+                });
+
+                it("should work with property names containing symbols", function () {
+                    var name = "Welcome, to @{here}!";
+
+                    Object.defineProperty(obj, name, {
+                        value: 2
+                    });
+
+                    expect(obj[name]).to.equal(2);
+                });
+            });
+
+            describe("for an accessor descriptor", function () {
+                /*it("should work with existing DOM objects", function () {
+                    var obj = document.createElement("span");
+
+                    Object.defineProperty(obj, "youvechosenprop", {
+                        get: function () {
+                            return 22;
+                        }
+                    });
+
+                    expect(obj.youvechosenprop).to.equal(22);
+                });*/
+
+                it("should work with property names containing symbols", function () {
+                    var name = "Welcome, to @{here}!";
+
+                    Object.defineProperty(obj, name, {
+                        get: function () {
+                            return "hello";
+                        }
+                    });
+
+                    expect(obj[name]).to.equal("hello");
+                });
             });
         });
 
