@@ -10,7 +10,7 @@ define([
     describe("Object", function () {
         var obj;
 
-        before(function () {
+        beforeEach(function () {
             obj = Object.create(null);
         });
 
@@ -47,16 +47,6 @@ define([
                 expect(obj[7]).to.equal(5);
             });
 
-            it("should work with existing DOM objects", function () {
-                var obj = document.createElement("span");
-
-                Object.defineProperty(obj, "prop", {
-                    value: 9
-                });
-
-                expect(obj.prop).to.equal(9);
-            });
-
             it("should correctly handle only configurable being specified", function () {
                 Object.defineProperty(obj, "me", {
                     configurable: true
@@ -76,7 +66,7 @@ define([
                 });
 
                 expect(Object.getOwnPropertyDescriptor(obj, "me")).to.eql({
-                    configurable: true,
+                    configurable: false,
                     enumerable: true,
                     value: undefined,
                     writable: false
