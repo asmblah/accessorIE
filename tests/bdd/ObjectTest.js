@@ -11,12 +11,12 @@ define([
         var obj;
 
         beforeEach(function () {
-            obj = Object.create(null);
+            obj = Object.create(Object.prototype, {});
         });
 
         describe("create", function () {
             it("should return an Object", function () {
-                expect(Object.create(null)).to.be.an("object");
+                expect(Object.create(Object.prototype, {})).to.be.an("object");
             });
         });
 

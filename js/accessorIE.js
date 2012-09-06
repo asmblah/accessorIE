@@ -206,22 +206,16 @@
     Object.create = function (extend, propertyDescriptors) {
         var obj;
 
-        if (extend === null || extend === Array.prototype) {
+        if (propertyDescriptors) {
             obj = createObject();
 
             if (extend) {
                 obj.__proto__ = extend;
             }
 
-            if (propertyDescriptors) {
-                Object.defineProperties(obj, propertyDescriptors);
-            }
+            Object.defineProperties(obj, propertyDescriptors);
 
             return obj;
-        }
-
-        if (propertyDescriptors) {
-            throw new Error("Shim can only work for IE when extending null or Array.prototype");
         }
 
         function Fn() {}
